@@ -5,12 +5,9 @@ executors:
     machine:
       image: ubuntu-2204:current
     working_directory: ~/repo
-    environment:
-      DOCKER_CLI_EXPERIMENTAL: enabled
-      KUBECTL_VERSION: v1.30.0  # Pinned version for stability
 
 jobs:
-  setup_environment:
+  setup_auth:
     executor: machine-executor
     steps:
       - checkout
@@ -19,14 +16,14 @@ jobs:
           command: |
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install -y google-cloud-sdk
+            sudo apt-get update && sudo apt-get install -y google-cloud-sdk google-cloud-sdk-gke-gcloud-auth-plugin
       - run:
-          name: Cache GCloud Auth
+          name: Authenticate with Google Cloud
           command: |
-            mkdir -p ~/.config/gcloud
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json --quiet
             gcloud config set project $GOOGLE_PROJECT_ID --quiet
+            gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
       - save_cache:
           key: gcloud-auth-{{ checksum "gcp-key.json" }}
           paths:
@@ -40,15 +37,13 @@ jobs:
           keys:
             - gcloud-auth-{{ checksum "gcp-key.json" }}
       - run:
-          name: Configure Docker for GCR
+          name: Refresh Docker Auth
           command: |
             gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
       - run:
           name: Build and Push Image
           command: |
-            docker buildx build \
-              --platform linux/amd64 \
-              -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest .
+            docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest .
             docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
 
   deploy_to_gke:
@@ -58,10 +53,6 @@ jobs:
       - restore_cache:
           keys:
             - gcloud-auth-{{ checksum "gcp-key.json" }}
-      - run:
-          name: Install Kubernetes Tools
-          command: |
-            sudo apt-get update && sudo apt-get install -y kubectl google-cloud-sdk-gke-gcloud-auth-plugin
       - run:
           name: Deploy to GKE
           command: |
@@ -75,10 +66,10 @@ workflows:
   version: 2
   deploy_pipeline:
     jobs:
-      - setup_environment
+      - setup_auth
       - build_docker_image:
           requires:
-            - setup_environment
+            - setup_auth
       - deploy_to_gke:
           requires:
             - build_docker_image
