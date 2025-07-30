@@ -3,7 +3,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-      - image: cimg/google-cloud:latest  # ✅ Includes both Docker and gcloud
+      - image: google/cloud-sdk:latest
     working_directory: ~/repo
 
 jobs:
