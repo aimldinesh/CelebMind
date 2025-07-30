@@ -13,7 +13,7 @@ jobs:
       - checkout
 
   build_docker_image:
-    machine: true  # Needed for Docker CLI
+    machine: true  # Gives full VM access with Docker pre-installed
     steps:
       - checkout
 
@@ -32,9 +32,16 @@ jobs:
             docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
 
   deploy_to_gke:
-    executor: docker-executor
+    machine: true  # Full VM allows kubectl and gcloud to run properly
     steps:
       - checkout
+
+      - run:
+          name: Install kubectl
+          command: |
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+            chmod +x ./kubectl
+            sudo mv ./kubectl /usr/local/bin/kubectl
 
       - run:
           name: Authenticate with Google Cloud
@@ -42,18 +49,6 @@ jobs:
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
             gcloud config set project "$GOOGLE_PROJECT_ID"
-
-      - run:
-          name: Install kubectl
-          command: |
-            apt-get update && apt-get install -y curl
-            curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            chmod +x kubectl
-            mv kubectl /usr/local/bin/kubectl
-
-      - run:
-          name: Configure GKE credentials
-          command: |
             gcloud container clusters get-credentials $GKE_CLUSTER \
               --region $GOOGLE_COMPUTE_REGION \
               --project $GOOGLE_PROJECT_ID
