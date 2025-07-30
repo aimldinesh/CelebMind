@@ -13,10 +13,9 @@ jobs:
       - checkout
 
   build_docker_image:
-    executor: docker-executor
+    machine: true   # <-- Use full VM with Docker preinstalled
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: Authenticate with Google Cloud
           command: |
@@ -34,7 +33,6 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: Authenticate with Google Cloud
           command: |
