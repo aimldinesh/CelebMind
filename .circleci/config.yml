@@ -3,7 +3,7 @@ version: 2.1
 executors:
   machine-executor:
     machine:
-      image: ubuntu-2204:current  # Full VM with Docker pre-installed
+      image: ubuntu-2204:current  # Full VM with Docker and sudo
     working_directory: ~/repo
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
             gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
 
       - run:
-          name: Build and Push Docker Image
+          name: Build and Push Image
           command: |
             docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest .
             docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
@@ -34,6 +34,7 @@ jobs:
     executor: machine-executor
     steps:
       - checkout
+
       - run:
           name: Authenticate with Google Cloud
           command: |
@@ -41,16 +42,17 @@ jobs:
             gcloud auth activate-service-account --key-file=gcp-key.json
             gcloud config set project $GOOGLE_PROJECT_ID
             gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
-
+      
       - run:
           name: Install kubectl
           command: |
-            curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            KUBECTL_VERSION=$(curl -s https://dl.k8s.io/release/stable.txt || echo "v1.30.0")
+            curl -LO "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
             chmod +x kubectl
             sudo mv kubectl /usr/local/bin/
 
       - run:
-          name: Configure GKE Cluster Access
+          name: Configure GKE
           command: |
             gcloud container clusters get-credentials $GKE_CLUSTER --region $GOOGLE_COMPUTE_REGION --project $GOOGLE_PROJECT_ID
 
