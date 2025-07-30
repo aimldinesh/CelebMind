@@ -13,15 +13,17 @@ jobs:
       - checkout
 
   build_docker_image:
-    machine: true   # <-- Use full VM with Docker preinstalled
+    machine: true  # Needed for Docker CLI
     steps:
       - checkout
+
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
+            gcloud config set project "$GOOGLE_PROJECT_ID"
+            gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - run:
           name: Build and Push Docker Image
@@ -33,24 +35,28 @@ jobs:
     executor: docker-executor
     steps:
       - checkout
+
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
+            gcloud config set project "$GOOGLE_PROJECT_ID"
 
       - run:
           name: Install kubectl
           command: |
+            apt-get update && apt-get install -y curl
             curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
             chmod +x kubectl
-            mv kubectl /usr/local/bin/
+            mv kubectl /usr/local/bin/kubectl
 
       - run:
-          name: Configure GKE
+          name: Configure GKE credentials
           command: |
-            gcloud container clusters get-credentials $GKE_CLUSTER --region $GOOGLE_COMPUTE_REGION --project $GOOGLE_PROJECT_ID
+            gcloud container clusters get-credentials $GKE_CLUSTER \
+              --region $GOOGLE_COMPUTE_REGION \
+              --project $GOOGLE_PROJECT_ID
 
       - run:
           name: Deploy to GKE
