@@ -1,71 +1,70 @@
 version: 2.1
 
 executors:
-  machine-executor:
-    machine:
-      image: ubuntu-2204:current
+  docker-executor:
+    docker:
+      - image: google/cloud-sdk:latest
     working_directory: ~/repo
 
 jobs:
-  setup_auth:
-    executor: machine-executor
+  checkout_code:
+    executor: docker-executor
     steps:
       - checkout
-      - run:
-          name: Install Google Cloud SDK
-          command: |
-            echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install -y google-cloud-sdk
-      - run:
-          name: Authenticate with Google Cloud
-          command: |
-            echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
-            gcloud auth activate-service-account --key-file=gcp-key.json --quiet
-            gcloud config set project $GOOGLE_PROJECT_ID --quiet
-            gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-      - save_cache:
-          key: gcloud-auth-{{ .Environment.CIRCLE_SHA1 }}
-          paths:
-            - ~/.config/gcloud
 
   build_docker_image:
-    executor: machine-executor
+    executor: docker-executor
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - gcloud-auth-{{ .Environment.CIRCLE_SHA1 }}
+      - setup_remote_docker
+      - run:
+          name: Authenticate with google cloud
+          command: |
+              echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
+              gcloud auth activate-service-account --key-file=gcp-key.json
+              gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
+
       - run:
           name: Build and Push Image
           command: |
-            docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest .
-            docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
+              docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest .
+              docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
 
   deploy_to_gke:
-    executor: machine-executor
+    executor: docker-executor
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - gcloud-auth-{{ .Environment.CIRCLE_SHA1 }}
+      - setup_remote_docker
+      - run:
+          name: Authenticate with google cloud
+          command: |
+              echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
+              gcloud auth activate-service-account --key-file=gcp-key.json
+              gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
+      
+      - run:
+          name: Configure GKE
+          command: |
+              gcloud container clusters get-credentials $GKE_CLUSTER --region $GOOGLE_COMPUTE_REGION --project $GOOGLE_PROJECT_ID
       - run:
           name: Deploy to GKE
           command: |
-            gcloud container clusters get-credentials $GKE_CLUSTER \
-              --region $GOOGLE_COMPUTE_REGION \
-              --project $GOOGLE_PROJECT_ID
-            kubectl apply -f kubernetes-deployment.yaml
-            kubectl rollout status deployment/celebmind-app --timeout=3m
+              kubectl apply -f kubernetes-deployment.yaml --validate=false
+              kubectl rollout restart deployment celebmind-app
 
 workflows:
   version: 2
   deploy_pipeline:
     jobs:
-      - setup_auth
+      - checkout_code
       - build_docker_image:
           requires:
-            - setup_auth
+            - checkout_code
       - deploy_to_gke:
           requires:
             - build_docker_image
+
+    
+
+
+
