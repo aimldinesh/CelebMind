@@ -3,7 +3,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-      - image: cimg/base:stable  # ✅ Includes Docker CLI
+      - image: cimg/google-cloud:latest  # ✅ Includes both Docker and gcloud
     working_directory: ~/repo
 
 jobs:
@@ -66,8 +66,3 @@ workflows:
       - deploy_to_gke:
           requires:
             - build_docker_image
-
-    
-
-
-
