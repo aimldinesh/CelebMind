@@ -34,17 +34,6 @@ jobs:
     executor: machine-executor
     steps:
       - checkout
-
-      - run:
-          name: Install kubectl
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y apt-transport-https ca-certificates curl
-            sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
-            echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-            sudo apt-get update
-            sudo apt-get install -y kubectl
-
       - run:
           name: Authenticate with Google Cloud
           command: |
@@ -54,7 +43,14 @@ jobs:
             gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
 
       - run:
-          name: Configure GKE
+          name: Install kubectl
+          command: |
+            curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            sudo mv kubectl /usr/local/bin/
+
+      - run:
+          name: Configure GKE Cluster Access
           command: |
             gcloud container clusters get-credentials $GKE_CLUSTER --region $GOOGLE_COMPUTE_REGION --project $GOOGLE_PROJECT_ID
 
