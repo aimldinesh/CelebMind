@@ -16,7 +16,7 @@ jobs:
           command: |
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-            sudo apt-get update && sudo apt-get install -y google-cloud-sdk google-cloud-sdk-gke-gcloud-auth-plugin
+            sudo apt-get update && sudo apt-get install -y google-cloud-sdk
       - run:
           name: Authenticate with Google Cloud
           command: |
@@ -25,7 +25,7 @@ jobs:
             gcloud config set project $GOOGLE_PROJECT_ID --quiet
             gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
       - save_cache:
-          key: gcloud-auth-{{ checksum "gcp-key.json" }}
+          key: gcloud-auth-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - ~/.config/gcloud
 
@@ -35,11 +35,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - gcloud-auth-{{ checksum "gcp-key.json" }}
-      - run:
-          name: Refresh Docker Auth
-          command: |
-            gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+            - gcloud-auth-{{ .Environment.CIRCLE_SHA1 }}
       - run:
           name: Build and Push Image
           command: |
@@ -52,7 +48,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - gcloud-auth-{{ checksum "gcp-key.json" }}
+            - gcloud-auth-{{ .Environment.CIRCLE_SHA1 }}
       - run:
           name: Deploy to GKE
           command: |
