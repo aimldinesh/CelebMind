@@ -1,19 +1,21 @@
 version: 2.1
 
 executors:
-  docker-executor:
+  gcp-docker-executor:
     docker:
-      - image: cimg/cloud-sdk:latest
+      - image: public.ecr.aws/circleci/cloud-sdk:latest  # Has both gcloud and Docker CLI
     working_directory: ~/repo
+    environment:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: 1  # Disables gcloud interactive prompts
 
 jobs:
   checkout_code:
-    executor: docker-executor
+    executor: gcp-docker-executor
     steps:
       - checkout
 
   build_docker_image:
-    executor: docker-executor
+    executor: gcp-docker-executor
     steps:
       - checkout
       - setup_remote_docker
@@ -22,28 +24,33 @@ jobs:
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud auth configure-docker us-central1-docker.pkg.dev
+            gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
 
       - run:
           name: Build and Push Docker Image
           command: |
-            docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest .
+            # Build with cache-from if you have previous builds
+            docker build \
+              -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:$CIRCLE_SHA1 \
+              -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest \
+              .
+            
+            # Push both tags
+            docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:$CIRCLE_SHA1
             docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
 
   deploy_to_gke:
-    executor: docker-executor
+    executor: gcp-docker-executor
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud auth configure-docker us-central1-docker.pkg.dev
-
+      
       - run:
-          name: Configure GKE Credentials
+          name: Configure GKE
           command: |
             gcloud container clusters get-credentials $GKE_CLUSTER \
               --region $GOOGLE_COMPUTE_REGION \
@@ -56,7 +63,6 @@ jobs:
             kubectl rollout restart deployment celebmind-app
 
 workflows:
-  version: 2
   deploy_pipeline:
     jobs:
       - checkout_code
