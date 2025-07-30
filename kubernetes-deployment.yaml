@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: celebmind-container
-          image: us-central1-docker.pkg.dev/gen-lang-client-0729539659/llmops-repo/llmops-app:latest
+          image: us-central1-docker.pkg.dev/mlops-project-462105/llmops-repo/llmops-app:latest
           ports:
             - containerPort: 5000
           env:
