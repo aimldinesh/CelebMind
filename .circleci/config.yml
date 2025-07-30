@@ -1,47 +1,54 @@
 version: 2.1
 
 executors:
-  machine-executor:
-    machine:
-      image: ubuntu-2204:current  # Full VM with Docker pre-installed
+  docker-executor:
+    docker:
+      - image: google/cloud-sdk:latest
     working_directory: ~/repo
 
 jobs:
   checkout_code:
-    executor: machine-executor
+    executor: docker-executor
     steps:
       - checkout
 
   build_docker_image:
-    executor: machine-executor
+    executor: docker-executor
     steps:
       - checkout
+      - setup_remote_docker
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud config set project $GOOGLE_PROJECT_ID
             gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
 
       - run:
-          name: Build and Push Image
+          name: Build and Push Docker Image
           command: |
             docker build -t us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest .
             docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
 
   deploy_to_gke:
-    executor: machine-executor
+    executor: docker-executor
     steps:
       - checkout
+      - setup_remote_docker
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud config set project $GOOGLE_PROJECT_ID
             gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
-      
+
+      - run:
+          name: Install kubectl
+          command: |
+            curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            mv kubectl /usr/local/bin/
+
       - run:
           name: Configure GKE
           command: |
