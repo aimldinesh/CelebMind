@@ -1,0 +1,46 @@
+# ----------------------
+# 🛠 Deployment Section
+# ----------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celebmind-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celebmind-app
+  template:
+    metadata:
+      labels:
+        app: celebmind-app
+    spec:
+      containers:
+        - name: celebmind-container
+          image: us-central1-docker.pkg.dev/gen-lang-client-0729539659/llmops-repo/llmops-app:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: llmops-secrets
+                  key: GROQ_API_KEY
+
+---
+
+# ------------------
+# 🌐 Service Section
+# ------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: celebmind-service
+spec:
+  selector:
+    app: celebmind-app
+  ports:
+    - protocol: TCP
+      port: 80         # Public port
+      targetPort: 5000 # Flask app port inside container
+  type: LoadBalancer
