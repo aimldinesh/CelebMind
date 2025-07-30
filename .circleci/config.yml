@@ -13,17 +13,16 @@ jobs:
       - checkout
 
   build_docker_image:
-    machine: true  # Gives full VM access with Docker pre-installed
+    executor: docker-executor
     steps:
       - checkout
-
+      - setup_remote_docker
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud config set project "$GOOGLE_PROJECT_ID"
-            gcloud auth configure-docker us-central1-docker.pkg.dev
+            gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
 
       - run:
           name: Build and Push Docker Image
@@ -32,23 +31,25 @@ jobs:
             docker push us-central1-docker.pkg.dev/$GOOGLE_PROJECT_ID/llmops-repo/llmops-app:latest
 
   deploy_to_gke:
-    machine: true  # Full VM allows kubectl and gcloud to run properly
+    executor: docker-executor
     steps:
       - checkout
-
-      - run:
-          name: Install kubectl
-          command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-            chmod +x ./kubectl
-            sudo mv ./kubectl /usr/local/bin/kubectl
-
+      - setup_remote_docker
       - run:
           name: Authenticate with Google Cloud
           command: |
             echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
             gcloud auth activate-service-account --key-file=gcp-key.json
-            gcloud config set project "$GOOGLE_PROJECT_ID"
+            gcloud auth configure-docker us-central1-docker.pkg.dev || gcloud auth configure-docker
+
+      - run:
+          name: Install gke-gcloud-auth-plugin (Fixes kubectl auth error)
+          command: |
+            apt-get update && apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+
+      - run:
+          name: Configure kubectl with GKE
+          command: |
             gcloud container clusters get-credentials $GKE_CLUSTER \
               --region $GOOGLE_COMPUTE_REGION \
               --project $GOOGLE_PROJECT_ID
