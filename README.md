@@ -154,6 +154,13 @@ The app will be available at: http://127.0.0.1:5000
 docker build -t celebmind-app .
 docker run -p 5000:5000 celebmind-app
 ```
+---
+
+## 🚀 Deployment Setup Instructions
+For detailed, end-to-end deployment steps including GCP setup, Kubernetes configuration, and CircleCI integration:
+
+👉 [View Setup Instructions →](./setup_instruction.md)
+
 ## 📸 Sample Output
 
 ---
