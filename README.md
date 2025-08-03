@@ -162,11 +162,31 @@ For detailed, end-to-end deployment steps including GCP setup, Kubernetes config
 👉 [View Setup Instructions →](./setup_instruction.md)
 
 ## 📸 Sample Output
-| Image Upload                                                                                                                          | Celebrity Detection + Q\&A                                                                                                                         |
-| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+
+### 🧠 CelebMind App UI
+
+| Image Upload                                                                                                                           | Celebrity Detection + Q&A                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![Upload Image 1](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/App_images/1.App_image_Celebrity_image_1_upload.PNG)  | ![Response 1](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/App_images/2.App_image_detect_celebrity_name_and_info_QA_response.PNG) |
 | ![Upload Image 2](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/App_images/3.App_image__Celebrity_image_2_upload.PNG) | ![Response 2](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/App_images/4.App_image_detect_celebrity_name_and_info_QA_response.PNG) |
 
+---
+
+### ⚙️ CircleCI Pipeline
+
+| Homepage                                                                                                     | Trigger                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| ![CircleCI Homepage](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/circleci/1.homepage.png) | ![Pipeline Trigger](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/circleci/2.circleci_trigger.png) |
+
+| Build Success                                                                                                                | Project Summary                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| ![Pipeline Success](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/circleci/3.circleci_pipeline_success.PNG) | ![Project Success](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/circleci/4.circleci_project_success.PNG) |
+
+---
+
+### ☁️ GCP Deployment
+
+![App Deployed on GCP](https://github.com/aimldinesh/CelebMind/blob/main/screenshots/app_deployed_gcp/celebmind_app_deployed_on_GCP.png)
 
 ---
 ## 📚 Future Improvements
