@@ -1,13 +1,37 @@
 <p align="center">
-  <img src="https://img.shields.io/github/license/yourusername/celebmind?color=blue" alt="License Badge">
-  <img src="https://img.shields.io/github/stars/yourusername/celebmind?style=social" alt="GitHub Stars">
+  <img src="https://img.shields.io/github/last-commit/aimldinesh/CelebMind" alt="Last Commit Badge">
+  <img src="https://img.shields.io/circleci/build/github/aimldinesh/CelebMind" alt="CircleCI Build Status">
+  <img src="https://img.shields.io/badge/deployed-GCP-brightgreen" alt="Deployment Badge">
+  <img src="https://img.shields.io/badge/LLM-LLaMA_4-red" alt="LLM Badge">
+  <img src="https://img.shields.io/github/stars/aimldinesh/CelebMind?style=social" alt="GitHub Stars">
 </p>
+
 
 <h1 align="center">🎬 CelebMind: Celebrity Detector & Q&A App</h1>
 
 <p align="center">
   An intelligent AI app that <strong>detects celebrities from uploaded images</strong> and answers user queries about them using <strong>Groq's Llama 3 LLM</strong>. Built with <strong>OpenCV</strong>, <strong>Flask</strong>, and <strong>Kubernetes</strong> for scalable deployment.
 </p>
+
+---
+## 📚 Table of Contents
+
+1. [🎬 Project Overview](#-celebmind-celebrity-detector--qa-app)
+2. [📌 Features](#-features)
+3. [🧱 Architecture](#-architecture)
+4. [🔄 Project Workflow](#-project-workflow)
+5. [🔄 Step-By-Step : How it works?](#-step-by-step--how-it-works)
+6. [🧪 Tech Stack](#-tech-stack)
+7. [🚀 Setup Instructions](#-setup-instructions)
+8. [✅ Docker Run (Optional)](#-docker-run-optional)
+9. [🚀 Deployment Setup Instructions](#-deployment-setup-instructions)
+10. [📸 Sample Output](#-sample-output)
+    - [🧠 CelebMind App UI](#-celebmind-app-ui)
+    - [⚙️ CircleCI Pipeline](#️-circleci-pipeline)
+    - [☁️ GCP Deployment](#️-gcp-deployment)
+11. [📚 Future Improvements](#-future-improvements)
+12. [💡 Credits](#-credits)
+13. [🤝 Contributors](#-contributors)
 
 ---
 
