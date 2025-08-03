@@ -3,7 +3,6 @@
   <img src="https://img.shields.io/badge/deployed-GCP-brightgreen" alt="Deployment Badge">
   <img src="https://img.shields.io/badge/LLM-LLaMA_4-red" alt="LLM Badge">
   <img src="https://img.shields.io/github/stars/aimldinesh/CelebMind?style=social" alt="GitHub Stars">
-  <img src="https://img.shields.io/circleci/build/github/aimldinesh/CelebMind?style=for-the-badge&logo=circleci&logoColor=white" alt="CircleCI Badge"/>
   <br><br>
   <img src="https://img.shields.io/badge/Docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Badge"/>
   <img src="https://img.shields.io/badge/OpenCV-27338e?style=for-the-badge&logo=opencv&logoColor=white" alt="OpenCV Badge"/>
